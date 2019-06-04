@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+	function hideDivSection(){
+		document.getElementById("addbook").value="";
+		document.getElementById("addauthor").value="";
+		document.getElementById("addpublisher").value="";
+		document.getElementById("addprice").value="";
+		document.getElementById("adddiv").hidden=true;
+		document.getElementById("addbtn").hidden=false;
+	}
+	
+	function getAllInfo(){
+		$.ajax({
+			url:"http://localhost:4040/all",
+			method:"GET",
+			success:function(data){
+				console.log(data);
+				var txt='';
+				for(var i=0;i<data.length;i++){
+					var btnTxt="<td><button type=button class='editbtn'>Update</button></td><td><button type=button class='deletebtn'>Delete</button></td>";
+					var line="<tr id="+data[i].id+"><td>"+data[i].name+"</td><td>"+data[i].author+"</td><td>"+data[i].publisher+"</td><td>"+data[i].price+"</td>"+btnTxt+"</tr>";
+					txt=txt+line;
+				}
+				$("#tablebook").append(txt);
+			},
+			error: function(error){
+				alert("List Error");
+			}
+		});
+	}
+	
+	$(function(){
+		$('div').on('click','.deletebtn',function(){
+			var id=$(this).closest("tr").attr('id');
+			$.ajax({
+				url:"http://localhost:4040/delete/"+id,
+				method:"DELETE",
+				success:function(data){
+					$("#tablebook").empty();
+					getAllInfo();
+					alert("Data Delted");
+				},
+				error:function(error){
+					alert("Delete Error");
+				}
+			});
+			$("#tablebook").empty();
+			getAllInfo();
+		});
+	})
+	
+	$(function(){
+		$('div').on('click','.updateCancelbtn',function(){
+			var row=$(this).closest("tr");
+			var name=row.children()[0].childNodes[0].value;
+			var author=row.children()[1].childNodes[0].value;
+			var publisher=row.children()[2].childNodes[0].value;
+			var price=row.children()[3].childNodes[0].value;
+			var txt="<td>"+name+"</td><td>"+author+"</td><td>"+publisher+"</td><td>"+price+"</td><td><button type=button class='editbtn'>Update</button></td><td><button type=button class='deletebtn'>Delete</button></td>";
+			row.html(txt);
+			$("#tablebook").empty();
+			getAllInfo();
+		});
+		
+		$('div').on('click','.editbtn',function(){
+			var row=$(this).closest("tr");
+			var id=row.attr('id');
+			var name=row.children()[0].innerHTML;
+			var author=row.children()[1].innerHTML;
+			var publisher=row.children()[2].innerHTML;
+			var price=row.children()[3].innerHTML;
+			var txt="<td><input type=text value="+name+"></td><td><input type=text value="+author+"></td><td><input type=text value="+publisher+"></td><td><input type=text value="+price+"></td><td><button type=button class=updateSavebtn>Save</button></td><td><button type=button class=updateCancelbtn>Cancel</button></td>";
+			row.html(txt);
+		});
+		
+		$('div').on('click','.updateSavebtn',function(){
+			var jsonBook={};
+			var row=$(this).closest("tr");
+			var id=row.attr('id');
+			jsonBook.name=row.children()[0].childNodes[0].value;
+			jsonBook.author=row.children()[1].childNodes[0].value;
+			jsonBook.publisher=row.children()[2].childNodes[0].value;
+			jsonBook.price=row.children()[3].childNodes[0].value;
+			var BookObj=JSON.stringify(jsonBook);
+			$.ajax({
+				url:"http://localhost:4040/update/"+id,
+				method:"PUT",
+				data:BookObj,
+				contentType:"application/json",
+				success:function(data){
+					$("#tablebook").empty();
+					getAllInfo();
+					hideDivSection();
+				},
+				error:function(error){
+					alert("Update Error");
+				}
+			});
+		});
+	})
+	
+	$(document).ready(function(){
+		getAllInfo();
+		hideDivSection();
+		
+		$("#savebtn").click(function(){
+			var jsonBook={};
+			jsonBook.name=$('#addbook').val();
+			jsonBook.author=$('#addauthor').val();
+			jsonBook.publisher=$('#addpublisher').val();
+			jsonBook.price=$('#addprice').val();
+			var BookObj=JSON.stringify(jsonBook);
+			$.ajax({
+				url:"http://localhost:4040/insert",
+				method:"POST",
+				data:BookObj,
+				contentType:"application/json",
+				success:function(data){
+					$("#tablebook").empty();
+					getAllInfo();
+					hideDivSection();
+				},
+				error:function(error){
+					alert("Insert Error");
+				}
+			});
+		});
+		
+		$("#addbtn").click(function(){
+			document.getElementById("adddiv").hidden=false;
+			document.getElementById("addbtn").hidden=true;
+		});
+		
+		$("#cancelbtn").click(function(){
+			document.getElementById("addbook").value="";
+			document.getElementById("addauthor").value="";
+			document.getElementById("addpublisher").value="";
+			document.getElementById("addprice").value="";
+			document.getElementById("adddiv").hidden=true;
+			document.getElementById("addbtn").hidden=false;
+		});
+	});
+</script>
+</head>
+<body>
+	<div>
+		<table id="tablebook" border=1>
+			<tr>
+				<th>Book Name</th>
+				<th>Author</th>
+				<th>Publisher</th>
+				<th>Price</th>
+				<th colspan=2 align="center">Actions</th>
+			</tr>
+		</table>
+		<br> <br> <input type="button" id="addbtn" value="Add">
+	</div>
+	<br>
+	<br>
+	<div id="adddiv">
+		Book Name : <input type="text" id="addbook"><br>
+		<br> Book Author : <input type="text" id="addauthor"><br>
+		<br> Book Publisher : <input type="text" id="addpublisher"><br>
+		<br> Price: <input type="text" id="addprice"><br>
+		<br> <input type="button" id="savebtn" value="Save"> 
+		<input type="button" id="cancelbtn" value="Cancel">
+	</div>
+
+</body>
+</html>
